@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t rwdumee/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true rwdumee/react-test npm test
+
+after_success:
+  - docker build -t rwdumee/multi-client ./client
+  - docker build -t rwdumee/multi-nginx ./nginx
+  - docker build -t rwdumee/multi-server ./server
+  - docker build -t rwdumee/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PWD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push rwdumee/multi-client
+  - docker push rwdumee/multi-nginx
+  - docker push rwdumee/multi-server
+  - docker push rwdumee/multi-worker
